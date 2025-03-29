@@ -1,14 +1,19 @@
 import sqlite3
 import streamlit as st
+import os
 
 # DB 연결 함수
 def connect_db():
-    conn = sqlite3.connect('/mnt/data/job_matching_fixed.db')
+    # Git 저장소 내 'data' 폴더에 위치한 DB 파일 경로
+    db_path = os.path.join(os.getcwd(), 'data', 'job_matching_fixed.db')
+    conn = sqlite3.connect(db_path)
     return conn
 
 # 구인자/구직자 입력 내역 별도 DB 연결
 def connect_user_db():
-    conn = sqlite3.connect('user_data.db')
+    # Git 저장소 내 'data' 폴더에 위치한 사용자 DB 파일 경로
+    db_path = os.path.join(os.getcwd(), 'data', 'user_data.db')
+    conn = sqlite3.connect(db_path)
     return conn
 
 # 구인자 입력 내역 저장 함수 (일자리)
@@ -100,3 +105,6 @@ if st.button("대화 종료"):
         st.write("서비스를 이용해 주셔서 감사합니다!")
     else:
         st.write("대화를 종료합니다.")
+
+
+       
