@@ -3,12 +3,12 @@ import streamlit as st
 
 # DB 연결 함수
 def connect_db():
-    conn = sqlite3.connect("job_matching_fixed.db")
+    conn = sqlite3.connect('/mnt/data/job_matching_fixed.db')
     return conn
 
 # 구인자/구직자 입력 내역 별도 DB 연결
 def connect_user_db():
-    conn = sqlite3.connect("user_data.db")
+    conn = sqlite3.connect('user_data.db')
     return conn
 
 # 구인자 입력 내역 저장 함수 (일자리)
@@ -38,6 +38,7 @@ def calculate_score(abilities, disability_type):
     matching_data = cur.fetchall()
 
     for ability in abilities:
+        is_invalid = False  # 하나라도 X가 있으면 부적합으로 처리
         for entry in matching_data:
             if entry[0] == ability:  # 능력명 일치
                 if entry[2] == '○':  # 동그라미: 2점
@@ -45,7 +46,10 @@ def calculate_score(abilities, disability_type):
                 elif entry[2] == '△':  # 세모: 1점
                     score += 1
                 elif entry[2] == 'X':  # 엑스: 부적합
-                    return "부적합"  # 하나라도 'X'가 있으면 부적합 처리
+                    is_invalid = True  # 하나라도 X가 있으면 부적합 처리
+                    break
+        if is_invalid:
+            return "부적합"  # 하나라도 X가 있으면 부적합 처리
     return score
 
 # Streamlit UI
