@@ -2,17 +2,15 @@ import sqlite3
 import streamlit as st
 import os
 
-# DB 연결 함수
+# DB 연결 함수 (job_matching_fixed.db)
 def connect_db():
-    # Git 저장소 내 'data' 폴더에 위치한 DB 파일 경로
-    db_path = os.path.join(os.getcwd(), 'data', 'job_matching_fixed.db')
+    db_path = os.path.join(os.getcwd(), 'job_matching_fixed.db')  # 현재 작업 디렉토리에서 찾기
     conn = sqlite3.connect(db_path)
     return conn
 
-# 구인자/구직자 입력 내역 별도 DB 연결
+# 구인자/구직자 입력 내역 별도 DB 연결 (user_data.db)
 def connect_user_db():
-    # Git 저장소 내 'data' 폴더에 위치한 사용자 DB 파일 경로
-    db_path = os.path.join(os.getcwd(), 'data', 'user_data.db')
+    db_path = os.path.join(os.getcwd(), 'user_data.db')  # 현재 작업 디렉토리에서 찾기
     conn = sqlite3.connect(db_path)
     return conn
 
@@ -105,6 +103,3 @@ if st.button("대화 종료"):
         st.write("서비스를 이용해 주셔서 감사합니다!")
     else:
         st.write("대화를 종료합니다.")
-
-
-       
