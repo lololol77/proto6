@@ -5,55 +5,93 @@ import os
 # DB 연결 함수 (job_matching_fixed.db)
 def connect_db():
     db_path = os.path.join(os.getcwd(), 'job_matching_fixed.db')  # 현재 작업 디렉토리에서 찾기
-    conn = sqlite3.connect(db_path)
-    return conn
+    print(f"DB Path for job matching: {db_path}")  # 디버깅을 위한 출력
+    try:
+        conn = sqlite3.connect(db_path)
+        return conn
+    except sqlite3.Error as e:
+        print(f"DB 연결 오류: {e}")
+        return None
 
 # 구인자/구직자 입력 내역 별도 DB 연결 (user_data.db)
 def connect_user_db():
     db_path = os.path.join(os.getcwd(), 'user_data.db')  # 현재 작업 디렉토리에서 찾기
-    conn = sqlite3.connect(db_path)
-    return conn
+    print(f"DB Path for user data: {db_path}")  # 디버깅을 위한 출력
+    try:
+        conn = sqlite3.connect(db_path)
+        return conn
+    except sqlite3.Error as e:
+        print(f"DB 연결 오류: {e}")
+        return None
 
 # 구인자 입력 내역 저장 함수 (일자리)
 def save_job_posting(job_title, abilities):
     conn = connect_user_db()
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS job_postings (id INTEGER PRIMARY KEY, title TEXT, abilities TEXT)")
-    cur.execute("INSERT INTO job_postings (title, abilities) VALUES (?, ?)", (job_title, ", ".join(abilities)))
-    conn.commit()
-    conn.close()
+    if conn is None:
+        st.error("DB 연결 실패!")
+        return
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS job_postings (id INTEGER PRIMARY KEY, title TEXT, abilities TEXT)")
+        cur.execute("INSERT INTO job_postings (title, abilities) VALUES (?, ?)", (job_title, ", ".join(abilities)))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"쿼리 실행 오류: {e}")
+        st.error("쿼리 실행 오류가 발생했습니다.")
+    finally:
+        conn.close()
 
 # 구직자 입력 내역 저장 함수 (프로필)
 def save_job_seeker(name, disability, severity):
     conn = connect_user_db()
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS job_seekers (id INTEGER PRIMARY KEY, name TEXT, disability TEXT, severity TEXT)")
-    cur.execute("INSERT INTO job_seekers (name, disability, severity) VALUES (?, ?, ?)", (name, disability, severity))
-    conn.commit()
-    conn.close()
+    if conn is None:
+        st.error("DB 연결 실패!")
+        return
+
+    try:
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS job_seekers (id INTEGER PRIMARY KEY, name TEXT, disability TEXT, severity TEXT)")
+        cur.execute("INSERT INTO job_seekers (name, disability, severity) VALUES (?, ?, ?)", (name, disability, severity))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"쿼리 실행 오류: {e}")
+        st.error("쿼리 실행 오류가 발생했습니다.")
+    finally:
+        conn.close()
 
 # 점수 계산 함수 (동그라미: 2점, 세모: 1점, 엑스: 부적합)
 def calculate_score(abilities, disability_type):
     score = 0
     conn = connect_db()
-    cur = conn.cursor()
-    cur.execute("SELECT ability_id, disability_id, suitability FROM matching WHERE disability_id=?", (disability_type,))
-    matching_data = cur.fetchall()
+    if conn is None:
+        st.error("DB 연결 실패!")
+        return
 
-    for ability in abilities:
-        is_invalid = False  # 하나라도 X가 있으면 부적합으로 처리
-        for entry in matching_data:
-            if entry[0] == ability:  # 능력명 일치
-                if entry[2] == '○':  # 동그라미: 2점
-                    score += 2
-                elif entry[2] == '△':  # 세모: 1점
-                    score += 1
-                elif entry[2] == 'X':  # 엑스: 부적합
-                    is_invalid = True  # 하나라도 X가 있으면 부적합 처리
-                    break
-        if is_invalid:
-            return "부적합"  # 하나라도 X가 있으면 부적합 처리
-    return score
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT ability_id, disability_id, suitability FROM matching WHERE disability_id=?", (disability_type,))
+        matching_data = cur.fetchall()
+
+        for ability in abilities:
+            is_invalid = False  # 하나라도 X가 있으면 부적합으로 처리
+            for entry in matching_data:
+                if entry[0] == ability:  # 능력명 일치
+                    if entry[2] == '○':  # 동그라미: 2점
+                        score += 2
+                    elif entry[2] == '△':  # 세모: 1점
+                        score += 1
+                    elif entry[2] == 'X':  # 엑스: 부적합
+                        is_invalid = True  # 하나라도 X가 있으면 부적합 처리
+                        break
+            if is_invalid:
+                return "부적합"  # 하나라도 X가 있으면 부적합 처리
+        return score
+    except sqlite3.Error as e:
+        print(f"쿼리 실행 오류: {e}")
+        st.error("쿼리 실행 오류가 발생했습니다.")
+    finally:
+        conn.close()
 
 # Streamlit UI
 st.title("장애인 일자리 매칭 시스템")
